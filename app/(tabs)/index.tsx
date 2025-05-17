@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform, StyleSheet, TouchableOpacity } from 'react-native';
+import { router } from 'expo-router';
 
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
@@ -51,6 +52,17 @@ export default function HomeScreen() {
           <ThemedText type="defaultSemiBold">app-example</ThemedText>.
         </ThemedText>
       </ThemedView>
+
+      {/* Botón para ir a la página de login */}
+      <ThemedView style={styles.loginButtonContainer}>
+        <ThemedText type="subtitle">Ir a la página de login</ThemedText>
+        <TouchableOpacity
+          style={styles.loginButton}
+          onPress={() => router.push('/login')}
+        >
+          <ThemedText style={styles.loginButtonText}>Iniciar sesión</ThemedText>
+        </TouchableOpacity>
+      </ThemedView>
     </ParallaxScrollView>
   );
 }
@@ -71,5 +83,25 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     position: 'absolute',
+  },
+  loginButtonContainer: {
+    gap: 8,
+    marginTop: 20,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  loginButton: {
+    backgroundColor: '#c30000', // Color rojo como en el login
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    marginTop: 10,
+    minWidth: 200,
+    alignItems: 'center',
+  },
+  loginButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
