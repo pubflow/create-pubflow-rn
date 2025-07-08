@@ -5,9 +5,11 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { PubflowProvider, OfflineIndicator } from '@pubflow/react-native';
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect } from 'react';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { GlobalDebugger } from '@/components/debug';
+import { enableDebug, setDebugLevel } from '@/utils/debugConfig';
 
 // Auth component to handle redirects
 function AuthProvider({ children }: { children: ReactNode }) {
@@ -21,6 +23,16 @@ export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
+
+  // Configurar depuración al iniciar
+  useEffect(() => {
+    // Habilitar depuración en desarrollo
+    if (__DEV__) {
+      enableDebug(true);
+      setDebugLevel('debug');
+      console.log('Depuración habilitada en modo desarrollo');
+    }
+  }, []);
 
   if (!loaded) {
     // Async font loading only occurs in development.
@@ -46,6 +58,7 @@ export default function RootLayout() {
             validateBeforeRequests: false // No validar antes de cada petición para evitar problemas
           }
         }}
+        enableDebugTools={__DEV__} // Habilitar herramientas de depuración en desarrollo
       >
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
           <AuthProvider>
@@ -56,6 +69,8 @@ export default function RootLayout() {
             </Stack>
             <StatusBar style="auto" />
             <OfflineIndicator />
+            {/* Depurador global - solo visible en desarrollo */}
+            {__DEV__ && <GlobalDebugger initialVisible={false} />}
           </AuthProvider>
         </ThemeProvider>
       </PubflowProvider>
