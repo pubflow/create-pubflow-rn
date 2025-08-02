@@ -1,20 +1,25 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Alert, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useAuth, BridgeView } from '@pubflow/react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import EditProfileModal from '@/components/profile/EditProfileModal';
+import { ColorSystem, MAIN_COLOR } from '@/utils/colorSystem';
 
 export default function ProfileScreen() {
   // Get user data and authentication functions
   const { user, logout, isLoading } = useAuth();
   const colorScheme = useColorScheme();
-  const mainColor = '#c30000';
+  const mainColor = MAIN_COLOR;
 
   // Local states
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Handle logout
   const handleLogout = async () => {
@@ -28,6 +33,12 @@ export default function ProfileScreen() {
       console.error('Logout error:', error);
       setIsLoggingOut(false);
     }
+  };
+
+  // Handle profile updated
+  const handleProfileUpdated = () => {
+    setRefreshKey(prev => prev + 1);
+    setShowEditModal(false);
   };
 
   // Handle session reset
@@ -97,11 +108,28 @@ export default function ProfileScreen() {
 
       <ThemedView style={styles.header}>
         <View style={styles.profileImageContainer}>
-          <View style={[styles.profileImagePlaceholder, { backgroundColor: mainColor }]}>
-            <ThemedText style={styles.profileImagePlaceholderText}>
-              {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
-            </ThemedText>
-          </View>
+          {user.picture && user.picture.trim() !== '' ? (
+            <Image
+              source={{ uri: user.picture }}
+              style={styles.profileImage}
+              onError={() => {
+                console.error('❌ Profile image load error:', user.picture);
+              }}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={[styles.profileImagePlaceholder, { backgroundColor: mainColor }]}>
+              <ThemedText style={styles.profileImagePlaceholderText}>
+                {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+              </ThemedText>
+            </View>
+          )}
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() => setShowEditModal(true)}
+          >
+            <Ionicons name="pencil" size={16} color="#fff" />
+          </TouchableOpacity>
         </View>
         <ThemedText type="title" style={styles.name}>
           {user.name || 'User'}
@@ -149,6 +177,13 @@ export default function ProfileScreen() {
           <ThemedText style={styles.buttonText}>Reset Session</ThemedText>
         </TouchableOpacity>
       </ThemedView>
+
+      {/* Edit Profile Modal */}
+      <EditProfileModal
+        visible={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onProfileUpdated={handleProfileUpdated}
+      />
     </ScrollView>
   );
 }
@@ -170,6 +205,14 @@ const styles = StyleSheet.create({
   },
   profileImageContainer: {
     marginBottom: 16,
+    position: 'relative',
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 3,
+    borderColor: ColorSystem.primary.DEFAULT,
   },
   profileImagePlaceholder: {
     width: 100,
@@ -177,6 +220,24 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  editButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: ColorSystem.primary.DEFAULT,
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: ColorSystem.surface.primary,
+    shadowColor: ColorSystem.primary.DEFAULT,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   profileImagePlaceholderText: {
     color: 'white',

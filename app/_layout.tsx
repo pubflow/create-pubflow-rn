@@ -43,7 +43,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <PubflowProvider
         config={{
-          baseUrl: 'https://api.pml.edu.do',
+          baseUrl: process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.pml.edu.do',
           bridgeBasePath: '/bridge',
           authBasePath: '/auth',
           useSecureStorage: false, // Usar AsyncStorage en lugar de SecureStore

@@ -1,26 +1,29 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Colores del sistema Aula PML integrados con el sistema de colores profesional.
+ * Estos colores se basan en el color principal configurado en las variables de entorno.
  */
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+import { ColorSystem } from '@/utils/colorSystem';
+
+// Colores principales para modo claro y oscuro
+const tintColorLight = ColorSystem.primary.DEFAULT;
+const tintColorDark = ColorSystem.text.inverse;
 
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
+    text: ColorSystem.text.primary,
+    background: ColorSystem.surface.primary,
     tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
+    icon: ColorSystem.text.secondary,
+    tabIconDefault: ColorSystem.text.tertiary,
     tabIconSelected: tintColorLight,
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
+    text: ColorSystem.text.inverse,
+    background: ColorSystem.neutral[900],
     tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
+    icon: ColorSystem.neutral[400],
+    tabIconDefault: ColorSystem.neutral[500],
     tabIconSelected: tintColorDark,
   },
 };
