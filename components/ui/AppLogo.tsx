@@ -13,27 +13,28 @@ interface AppLogoProps {
 const getLogoSource = () => {
   const logoPath = process.env.EXPO_PUBLIC_LOGO || '@/assets/images/Pubflow_black.svg';
 
-  // Mapeo de paths comunes para require()
-  const logoMap: { [key: string]: any } = {
-    '@/assets/images/Pubflow_black.svg': require('@/assets/images/Pubflow_black.svg'),
-    '@/assets/images/partial-react-logo.png': require('@/assets/images/partial-react-logo.png'),
-    // Agregar más logos aquí según sea necesario
-    // Ejemplo: '@/assets/images/custom-logo.png': require('@/assets/images/custom-logo.png'),
-  };
-
-  // Si el path está en el mapeo, usar require(), sino intentar como URI
-  if (logoMap[logoPath]) {
-    return logoMap[logoPath];
-  }
-
   // Si es una URL externa, usar como URI
   if (logoPath.startsWith('http://') || logoPath.startsWith('https://')) {
     return { uri: logoPath };
   }
 
-  // Fallback al logo por defecto
-  console.warn(`Logo path "${logoPath}" not found in logoMap. Using default logo.`);
-  return logoMap['@/assets/images/Pubflow_black.svg'];
+  // Para paths locales, intentar require() dinámicamente usando eval
+  try {
+    // Usar eval para require dinámico - acepta CUALQUIER path del ENV
+    const logoSource = eval(`require('${logoPath}')`);
+    return logoSource;
+  } catch {
+    // Si falla, intentar como URI (para casos edge)
+    try {
+      return { uri: logoPath };
+    } catch {
+      // Último fallback - solo en caso de error total
+      if (__DEV__) {
+        console.warn(`Could not load logo "${logoPath}", using fallback`);
+      }
+      return require('@/assets/images/Pubflow_black.svg');
+    }
+  }
 };
 
 export default function AppLogo({ 

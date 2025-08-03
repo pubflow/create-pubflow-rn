@@ -128,7 +128,7 @@ export default function AccountRecoveryScreen() {
       </View>
 
       <TouchableOpacity
-        style={[styles.primaryButton, { backgroundColor: mainColor }, isLoading && styles.buttonLoading]}
+        style={[styles.primaryButton, { backgroundColor: mainColor, shadowColor: mainColor }, isLoading && styles.buttonLoading]}
         onPress={handleResetRequest}
         disabled={isLoading}
         activeOpacity={0.8}
@@ -172,7 +172,7 @@ export default function AccountRecoveryScreen() {
       </View>
 
       <TouchableOpacity
-        style={[styles.primaryButton, { backgroundColor: mainColor }]}
+        style={[styles.primaryButton, { backgroundColor: mainColor, shadowColor: mainColor }]}
         onPress={handleBackToLogin}
         activeOpacity={0.8}
       >
@@ -319,7 +319,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
-    shadowColor: '#006aff',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 12,

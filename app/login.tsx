@@ -16,6 +16,7 @@ export default function LoginScreen() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const registrationEnabled = process.env.EXPO_PUBLIC_REGISTRATION === 'true';
   const businessName = process.env.EXPO_PUBLIC_BUSINESS_NAME || 'Pubflow';
+  const mainColor = process.env.EXPO_PUBLIC_MAIN_COLOR || '#006aff';
 
   // Check authentication status
   useEffect(() => {
@@ -154,7 +155,7 @@ export default function LoginScreen() {
             </View>
 
             <TouchableOpacity
-              style={[styles.loginButton, isLoggingIn && styles.buttonLoading]}
+              style={[styles.loginButton, { backgroundColor: mainColor, shadowColor: mainColor }, isLoggingIn && styles.buttonLoading]}
               onPress={handleLogin}
               disabled={isLoggingIn}
               activeOpacity={0.8}
@@ -177,7 +178,7 @@ export default function LoginScreen() {
                   onPress={() => router.push('/account-recovery')}
                   disabled={isLoggingIn}
                 >
-                  <Text style={styles.linkText}>Forgot Password?</Text>
+                  <Text style={[styles.linkText, { color: mainColor }]}>Forgot Password?</Text>
                 </TouchableOpacity>
 
                 <View style={styles.divider}>
@@ -191,7 +192,7 @@ export default function LoginScreen() {
                   onPress={() => router.push('/create-account')}
                   disabled={isLoggingIn}
                 >
-                  <Text style={styles.linkText}>Create New Account</Text>
+                  <Text style={[styles.linkText, { color: mainColor }]}>Create New Account</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -307,13 +308,11 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   loginButton: {
-    backgroundColor: '#006aff',
     borderRadius: 16,
     height: 56,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 8,
-    shadowColor: '#006aff',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 12,
@@ -370,7 +369,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   linkText: {
-    color: '#006aff',
     fontSize: 16,
     fontWeight: '600',
   },
