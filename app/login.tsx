@@ -4,8 +4,8 @@ import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import { useAuth } from '@pubflow/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
+import AppLogo from '@/components/ui/AppLogo';
 
 export default function LoginScreen() {
   const { login, isAuthenticated } = useAuth();
@@ -14,6 +14,8 @@ export default function LoginScreen() {
   const [error, setError] = useState('');
   const [secureTextEntry, setSecureTextEntry] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const registrationEnabled = process.env.EXPO_PUBLIC_REGISTRATION === 'true';
+  const businessName = process.env.EXPO_PUBLIC_BUSINESS_NAME || 'Pubflow';
 
   // Check authentication status
   useEffect(() => {
@@ -87,14 +89,12 @@ export default function LoginScreen() {
         >
           {/* Logo Section */}
           <View style={styles.logoSection}>
-            <View style={styles.logoContainer}>
-              <Image
-                source={require('@/assets/images/Pubflow_black.svg')}
-                style={styles.logo}
-                contentFit="contain"
-              />
-            </View>
-            <Text style={styles.welcomeText}>Welcome to Pubflow</Text>
+            <AppLogo
+              width={240}
+              height={60}
+              containerStyle={styles.logoContainer}
+            />
+            <Text style={styles.welcomeText}>Welcome to {businessName}</Text>
             <Text style={styles.subtitleText}>Sign in to your account</Text>
           </View>
 
@@ -169,6 +169,33 @@ export default function LoginScreen() {
               )}
             </TouchableOpacity>
 
+            {/* Account Actions */}
+            {registrationEnabled && (
+              <View style={styles.accountActions}>
+                <TouchableOpacity
+                  style={styles.linkButton}
+                  onPress={() => router.push('/account-recovery')}
+                  disabled={isLoggingIn}
+                >
+                  <Text style={styles.linkText}>Forgot Password?</Text>
+                </TouchableOpacity>
+
+                <View style={styles.divider}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>or</Text>
+                  <View style={styles.dividerLine} />
+                </View>
+
+                <TouchableOpacity
+                  style={styles.linkButton}
+                  onPress={() => router.push('/create-account')}
+                  disabled={isLoggingIn}
+                >
+                  <Text style={styles.linkText}>Create New Account</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
             <TouchableOpacity
               style={styles.clearButton}
               onPress={handleClearStorage}
@@ -206,10 +233,6 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     paddingHorizontal: 20,
     paddingVertical: 20,
-  },
-  logo: {
-    width: 240,
-    height: 60,
   },
   welcomeText: {
     fontSize: 32,
@@ -336,6 +359,35 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginLeft: 8,
     flex: 1,
+    fontWeight: '500',
+  },
+  accountActions: {
+    marginTop: 24,
+    marginBottom: 16,
+  },
+  linkButton: {
+    padding: 12,
+    alignItems: 'center',
+  },
+  linkText: {
+    color: '#006aff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#e9ecef',
+  },
+  dividerText: {
+    color: '#666666',
+    fontSize: 14,
+    marginHorizontal: 16,
     fontWeight: '500',
   },
 });
