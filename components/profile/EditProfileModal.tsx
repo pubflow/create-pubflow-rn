@@ -15,6 +15,7 @@ import { useAuth } from '@pubflow/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ImageUploadComponent from './ImageUploadComponent';
 import { ColorSystem, ColorUtils, COLORS } from '@/utils/colorSystem';
+import { useUserSync } from '@/hooks/useUserSync';
 
 // Form data interface for updates
 interface UpdateUserData {
@@ -33,6 +34,7 @@ interface EditProfileModalProps {
 
 export default function EditProfileModal({ visible, onClose, onProfileUpdated }: EditProfileModalProps) {
   const { user } = useAuth();
+  const { syncUserData } = useUserSync();
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'personal' | 'photo' | 'password'>('personal');
@@ -170,14 +172,27 @@ export default function EditProfileModal({ visible, onClose, onProfileUpdated }:
         if (data.success && data.data) {
           Alert.alert('Éxito', 'Perfil actualizado correctamente');
 
-          // Fetch fresh data after successful update
+          // Sincronizar datos del usuario con AsyncStorage
           setRefreshing(true);
-          const freshData = await fetchFreshUserData(true);
-          if (freshData) {
-            initializeFormData(freshData);
-          }
-          setRefreshing(false);
+          const syncSuccess = await syncUserData(true);
 
+          if (syncSuccess) {
+            console.log('✅ EditProfileModal: Datos del usuario sincronizados correctamente');
+            // Actualizar datos frescos para el formulario
+            const freshData = await fetchFreshUserData(true);
+            if (freshData) {
+              initializeFormData(freshData);
+            }
+          } else {
+            console.warn('⚠️ EditProfileModal: Error sincronizando datos del usuario');
+            // Fallback: usar el método anterior
+            const freshData = await fetchFreshUserData(true);
+            if (freshData) {
+              initializeFormData(freshData);
+            }
+          }
+
+          setRefreshing(false);
           onProfileUpdated();
           return true;
         } else {
@@ -489,15 +504,29 @@ export default function EditProfileModal({ visible, onClose, onProfileUpdated }:
             <View style={styles.tabContent}>
               <ImageUploadComponent
                 currentImageUrl={freshUserData?.picture || user?.picture}
-                onImageUploaded={() => {
-                  // Refresh user data after successful image upload
+                onImageUploaded={async () => {
+                  // Sincronizar datos del usuario después de subir imagen
                   setRefreshing(true);
-                  fetchFreshUserData(true).then(freshData => {
+
+                  const syncSuccess = await syncUserData(true);
+
+                  if (syncSuccess) {
+                    console.log('✅ EditProfileModal: Imagen actualizada y datos sincronizados');
+                    // Actualizar datos frescos para el formulario
+                    const freshData = await fetchFreshUserData(true);
                     if (freshData) {
                       initializeFormData(freshData);
                     }
-                    setRefreshing(false);
-                  });
+                  } else {
+                    console.warn('⚠️ EditProfileModal: Error sincronizando después de subir imagen');
+                    // Fallback: usar el método anterior
+                    const freshData = await fetchFreshUserData(true);
+                    if (freshData) {
+                      initializeFormData(freshData);
+                    }
+                  }
+
+                  setRefreshing(false);
                   onProfileUpdated();
                 }}
               />
