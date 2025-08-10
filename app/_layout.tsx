@@ -53,6 +53,7 @@ export default function RootLayout() {
           },
           sessionConfig: {
             validationInterval: 60 * 60 * 1000, // 60 minutos
+            validationEndpoint: '/validation', // ✅ Ruta correcta que coincide con el backend
             autoValidate: false, // Desactivar validación automática para evitar problemas
             validateOnStartup: false, // No validar al iniciar para evitar problemas
             validateBeforeRequests: false // No validar antes de cada petición para evitar problemas

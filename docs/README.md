@@ -694,4 +694,97 @@ console.log(`SecureStore está ${isSecureAvailable ? 'disponible' : 'no disponib
 await storage.clear();
 ```
 
+## Nuevas Funcionalidades (v0.1.8)
+
+### Filtros Avanzados
+
+Utiliza filtros avanzados con operadores predefinidos:
+
+```jsx
+import { BridgeList, equals, contains, greaterThan } from '@pubflow/react-native';
+
+function UsersList() {
+  return (
+    <BridgeList
+      endpoint="users"
+      showAdvancedFilters={true}
+      filterFields={[
+        { name: 'name', label: 'Nombre', type: 'text', operator: contains },
+        { name: 'age', label: 'Edad', type: 'number', operator: greaterThan },
+        { name: 'status', label: 'Estado', type: 'select', operator: equals, options: [
+          { label: 'Activo', value: 'active' },
+          { label: 'Inactivo', value: 'inactive' }
+        ]}
+      ]}
+      renderItem={({ item }) => (
+        <View style={styles.userItem}>
+          <Text>{item.name}</Text>
+          <Text>{item.email}</Text>
+        </View>
+      )}
+    />
+  );
+}
+```
+
+### API Raw Service
+
+Para casos que requieren mayor control sobre las peticiones:
+
+```jsx
+import { useBridgeApiRaw } from '@pubflow/react-native';
+
+function CustomDataComponent() {
+  const apiRaw = useBridgeApiRaw({ endpoint: 'users' });
+
+  const handleCustomRequest = async () => {
+    try {
+      // Petición GET personalizada
+      const users = await apiRaw.getList({
+        page: 1,
+        limit: 10,
+        filters: { status: 'active' }
+      });
+
+      // Petición POST personalizada
+      const newUser = await apiRaw.create({
+        name: 'Juan Pérez',
+        email: 'juan@example.com'
+      });
+
+      console.log('Usuarios:', users);
+      console.log('Usuario creado:', newUser);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  return (
+    <Button title="Ejecutar petición personalizada" onPress={handleCustomRequest} />
+  );
+}
+```
+
+### Operadores de Filtro
+
+Utiliza operadores tipados para filtros:
+
+```jsx
+import {
+  equals,
+  notEquals,
+  contains,
+  startsWith,
+  endsWith,
+  greaterThan,
+  lessThan
+} from '@pubflow/react-native';
+
+const filterConfig = [
+  { field: 'name', operator: contains, value: 'Juan' },
+  { field: 'age', operator: greaterThan, value: 18 },
+  { field: 'email', operator: endsWith, value: '@gmail.com' }
+];
+```
+
 Para más información y ejemplos detallados, consulta la [referencia de API](./api-reference.md) y la sección de [ejemplos](./examples.md).

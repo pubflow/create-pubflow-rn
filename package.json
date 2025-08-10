@@ -13,8 +13,8 @@
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
     "@hookform/resolvers": "^5.0.1",
-    "@pubflow/core": "^0.1.2",
-    "@pubflow/react-native": "^0.1.4",
+    "@pubflow/core": "^0.2.0",
+    "@pubflow/react-native": "^0.1.8",
     "@react-native-async-storage/async-storage": "^2.1.2",
     "@react-native-community/datetimepicker": "8.4.1",
     "@react-native-community/netinfo": "^11.4.1",
