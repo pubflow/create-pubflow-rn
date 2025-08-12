@@ -12,6 +12,7 @@ import { useAuth } from '@pubflow/react-native';
 interface UserSyncResult {
   syncUserData: (forceRefresh?: boolean) => Promise<boolean>;
   updateLocalUserData: (updatedFields: Partial<any>) => Promise<boolean>;
+  updateUserPicture: (newPictureUrl: string) => Promise<boolean>;
 }
 
 export function useUserSync(): UserSyncResult {
@@ -117,8 +118,50 @@ export function useUserSync(): UserSyncResult {
     }
   }, [refreshUser]);
 
+  /**
+   * Actualiza específicamente la imagen de perfil del usuario en AsyncStorage
+   * Optimizado para subidas de imagen exitosas
+   */
+  const updateUserPicture = useCallback(async (newPictureUrl: string): Promise<boolean> => {
+    try {
+      console.log('🖼️ useUserSync: Actualizando imagen de perfil localmente...', newPictureUrl);
+
+      // Obtener datos actuales del usuario
+      const currentUserDataString = await AsyncStorage.getItem('pubflow_user_data');
+      if (!currentUserDataString) {
+        console.warn('⚠️ useUserSync: No se encontraron datos del usuario en AsyncStorage');
+        return false;
+      }
+
+      const currentUserData = JSON.parse(currentUserDataString);
+
+      // Actualizar solo el campo picture con la nueva URL
+      const updatedUserData = {
+        ...currentUserData,
+        picture: newPictureUrl,
+        updated_at: new Date().toISOString(), // Actualizar timestamp
+      };
+
+      // Guardar datos actualizados en AsyncStorage
+      await AsyncStorage.setItem('pubflow_user_data', JSON.stringify(updatedUserData));
+      console.log('✅ useUserSync: Imagen de perfil actualizada en AsyncStorage');
+
+      // Refrescar el contexto de autenticación de Pubflow
+      if (refreshUser) {
+        await refreshUser();
+        console.log('🔄 useUserSync: Contexto de autenticación actualizado con nueva imagen');
+      }
+
+      return true;
+    } catch (error) {
+      console.error('❌ useUserSync: Error actualizando imagen de perfil:', error);
+      return false;
+    }
+  }, [refreshUser]);
+
   return {
     syncUserData,
     updateLocalUserData,
+    updateUserPicture,
   };
 }

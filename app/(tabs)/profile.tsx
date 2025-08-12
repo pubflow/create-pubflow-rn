@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Alert, Image } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Alert, Image, Text } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useAuth, BridgeView } from '@pubflow/react-native';
 import { ThemedText } from '@/components/ThemedText';
@@ -19,7 +19,6 @@ export default function ProfileScreen() {
   // Local states
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
 
   // Handle logout
   const handleLogout = async () => {
@@ -37,8 +36,8 @@ export default function ProfileScreen() {
 
   // Handle profile updated
   const handleProfileUpdated = () => {
-    setRefreshKey(prev => prev + 1);
     setShowEditModal(false);
+    // Los datos se actualizan automáticamente a través del hook useUserSync
   };
 
   // Handle session reset
@@ -124,6 +123,16 @@ export default function ProfileScreen() {
               </ThemedText>
             </View>
           )}
+
+          {/* Username Badge */}
+          {user.user_name && (
+            <View style={[styles.badge, { backgroundColor: ColorSystem.primary.DEFAULT }]}>
+              <Text style={styles.badgeText}>
+                @{user.user_name}
+              </Text>
+            </View>
+          )}
+
           <TouchableOpacity
             style={styles.editButton}
             onPress={() => setShowEditModal(true)}
@@ -131,12 +140,20 @@ export default function ProfileScreen() {
             <Ionicons name="pencil" size={16} color="#fff" />
           </TouchableOpacity>
         </View>
-        <ThemedText type="title" style={styles.name}>
-          {user.name || 'User'}
-        </ThemedText>
-        <ThemedText style={styles.email}>
-          {user.email || 'Not available'}
-        </ThemedText>
+
+        <View style={styles.userInfo}>
+          <ThemedText type="title" style={[styles.name, { color: ColorSystem.text.primary }]} numberOfLines={2} ellipsizeMode="tail">
+            {`${user.name || 'User'} ${user.last_name || ''}`.trim()}
+          </ThemedText>
+          <ThemedText style={[styles.email, { color: ColorSystem.text.secondary }]} numberOfLines={1} ellipsizeMode="tail">
+            {user.email || 'Not available'}
+          </ThemedText>
+          {user.user_name && (
+            <ThemedText style={[styles.username, { color: ColorSystem.text.tertiary }]}>
+              @{user.user_name}
+            </ThemedText>
+          )}
+        </View>
       </ThemedView>
 
       <ThemedView style={styles.section}>
@@ -248,10 +265,44 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 4,
+    textAlign: 'center',
+    lineHeight: 28,
   },
   email: {
     fontSize: 16,
     opacity: 0.7,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  username: {
+    fontSize: 14,
+    opacity: 0.6,
+    fontStyle: 'italic',
+    marginTop: 2,
+  },
+  badge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  badgeText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+  userInfo: {
+    alignItems: 'center',
+    marginTop: 16,
+    paddingHorizontal: 20,
   },
   section: {
     padding: 20,

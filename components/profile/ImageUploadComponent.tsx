@@ -16,7 +16,7 @@ import { ColorSystem, ColorUtils } from '@/utils/colorSystem';
 
 interface ImageUploadComponentProps {
   currentImageUrl?: string | null;
-  onImageUploaded: () => void;
+  onImageUploaded: (newImageUrl?: string) => void;
 }
 
 export default function ImageUploadComponent({ currentImageUrl, onImageUploaded }: ImageUploadComponentProps) {
@@ -242,7 +242,10 @@ export default function ImageUploadComponent({ currentImageUrl, onImageUploaded 
         const responseData = await response.json();
         if (responseData.success) {
           Alert.alert('Éxito', 'Imagen subida correctamente');
-          onImageUploaded();
+          // ✅ NUEVO: Pasar la nueva URL de la imagen al callback
+          const newImageUrl = responseData.data?.picture_url;
+          console.log('🖼️ Nueva imagen URL del servidor:', newImageUrl);
+          onImageUploaded(newImageUrl);
         } else {
           throw new Error(responseData.error || 'Error al subir la imagen');
         }

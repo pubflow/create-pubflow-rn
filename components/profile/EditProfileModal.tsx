@@ -34,7 +34,7 @@ interface EditProfileModalProps {
 
 export default function EditProfileModal({ visible, onClose, onProfileUpdated }: EditProfileModalProps) {
   const { user } = useAuth();
-  const { syncUserData } = useUserSync();
+  const { syncUserData, updateLocalUserData, updateUserPicture } = useUserSync();
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'personal' | 'photo' | 'password'>('personal');
@@ -60,10 +60,7 @@ export default function EditProfileModal({ visible, onClose, onProfileUpdated }:
       if (!sessionId) return null;
 
       const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.pml.edu.do';
-
-      // Add timestamp to force fresh data when manually refreshing
-      const timestamp = forceRefresh ? `&_t=${Date.now()}` : '';
-      const url = `${baseUrl}/auth/user/me?session_id=${sessionId}${timestamp}`;
+      const url = `${baseUrl}/auth/user/me?session_id=${sessionId}`;
 
       const response = await fetch(url, {
         method: 'GET',
@@ -108,29 +105,44 @@ export default function EditProfileModal({ visible, onClose, onProfileUpdated }:
   const isInitializedRef = useRef(false);
   const lastUserIdRef = useRef<string | null>(null);
 
-  // Effect para manejar apertura/cierre del modal
+  // ✅ ARREGLADO: Effect para manejar apertura/cierre del modal con datos locales primero
   useEffect(() => {
     if (visible && user) {
-      // Solo inicializar si es la primera vez o si cambió el usuario
-      const shouldInitialize = !isInitializedRef.current || lastUserIdRef.current !== user.id;
+      console.log('🔄 EditProfileModal: Modal visible, verificando datos locales...');
 
-      if (shouldInitialize) {
-        // Marcar como inicializado para evitar múltiples llamadas
-        isInitializedRef.current = true;
-        lastUserIdRef.current = user.id;
-
-        // Fetch fresh data from API and ONLY use that data
-        setRefreshing(true);
-        fetchFreshUserData().then(freshData => {
-          if (freshData) {
-            initializeFormData(freshData);
-          } else {
-            // Fallback to context data only if API fails
-            initializeFormData(user);
+      // Primero intentar usar datos de AsyncStorage (más recientes)
+      setRefreshing(true);
+      AsyncStorage.getItem('pubflow_user_data').then(async (localUserData) => {
+        if (localUserData) {
+          try {
+            const userData = JSON.parse(localUserData);
+            console.log('✅ EditProfileModal: Usando datos locales de AsyncStorage');
+            setFreshUserData(userData);
+            initializeFormData(userData);
+            setRefreshing(false);
+            return; // No hacer GET si tenemos datos locales recientes
+          } catch (error) {
+            console.warn('⚠️ EditProfileModal: Error parseando datos locales:', error);
           }
-          setRefreshing(false);
-        });
-      }
+        }
+
+        // Solo hacer GET si no hay datos locales válidos
+        console.log('🔄 EditProfileModal: No hay datos locales, obteniendo del servidor...');
+        const freshData = await fetchFreshUserData();
+        if (freshData) {
+          setFreshUserData(freshData);
+          initializeFormData(freshData);
+          console.log('✅ EditProfileModal: Datos obtenidos del servidor');
+        } else {
+          // Fallback to context data only if API fails
+          initializeFormData(user);
+          console.log('⚠️ EditProfileModal: Usando datos del contexto como fallback');
+        }
+        setRefreshing(false);
+      });
+
+      isInitializedRef.current = true;
+      lastUserIdRef.current = user.id;
     } else if (!visible) {
       // Reset form when modal closes
       isInitializedRef.current = false;
@@ -144,6 +156,14 @@ export default function EditProfileModal({ visible, onClose, onProfileUpdated }:
       setRefreshing(false);
     }
   }, [visible, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ✅ ARREGLADO: Effect adicional para actualizar formulario cuando freshUserData cambie
+  useEffect(() => {
+    if (freshUserData && visible) {
+      console.log('🔄 EditProfileModal: freshUserData cambió, actualizando formulario...');
+      initializeFormData(freshUserData);
+    }
+  }, [freshUserData, visible]);
 
   // Update user data via backend
   const updateUserData = async (updateData: UpdateUserData) => {
@@ -172,27 +192,23 @@ export default function EditProfileModal({ visible, onClose, onProfileUpdated }:
         if (data.success && data.data) {
           Alert.alert('Éxito', 'Perfil actualizado correctamente');
 
-          // Sincronizar datos del usuario con AsyncStorage
-          setRefreshing(true);
-          const syncSuccess = await syncUserData(true);
+          // ✅ NUEVO: Actualizar datos localmente primero (inmediato)
+          console.log('🔄 EditProfileModal: Actualizando datos localmente...');
+          const localUpdateSuccess = await updateLocalUserData(updateData);
 
-          if (syncSuccess) {
-            console.log('✅ EditProfileModal: Datos del usuario sincronizados correctamente');
-            // Actualizar datos frescos para el formulario
-            const freshData = await fetchFreshUserData(true);
-            if (freshData) {
-              initializeFormData(freshData);
+          if (localUpdateSuccess) {
+            console.log('✅ EditProfileModal: Datos actualizados localmente');
+            // Actualizar el formulario con los datos locales actualizados
+            const currentUserData = await AsyncStorage.getItem('pubflow_user_data');
+            if (currentUserData) {
+              const userData = JSON.parse(currentUserData);
+              setFreshUserData(userData);
+              initializeFormData(userData);
             }
           } else {
-            console.warn('⚠️ EditProfileModal: Error sincronizando datos del usuario');
-            // Fallback: usar el método anterior
-            const freshData = await fetchFreshUserData(true);
-            if (freshData) {
-              initializeFormData(freshData);
-            }
+            console.warn('⚠️ EditProfileModal: Error actualizando datos localmente');
           }
 
-          setRefreshing(false);
           onProfileUpdated();
           return true;
         } else {
@@ -244,14 +260,15 @@ export default function EditProfileModal({ visible, onClose, onProfileUpdated }:
       return;
     }
 
-    // Create a clean update object with only the fields that have values
+    // ✅ ARREGLADO: Enviar todos los campos, incluso si están vacíos
     const updatePayload: any = {};
 
-    if (formData.name?.trim()) updatePayload.name = formData.name.trim();
-    if (formData.last_name?.trim()) updatePayload.last_name = formData.last_name.trim();
-    if (formData.email?.trim()) updatePayload.email = formData.email.trim().toLowerCase();
-    if (formData.phone?.trim()) updatePayload.phone = formData.phone.trim();
-    if (formData.user_name?.trim()) updatePayload.user_name = formData.user_name.trim();
+    // Siempre enviar los campos, incluso si están vacíos (para permitir limpiar campos)
+    updatePayload.name = formData.name?.trim() || '';
+    updatePayload.last_name = formData.last_name?.trim() || '';
+    updatePayload.email = formData.email?.trim().toLowerCase() || '';
+    updatePayload.phone = formData.phone?.trim() || '';
+    updatePayload.user_name = formData.user_name?.trim() || '';
 
     await updateUserData(updatePayload);
   };
@@ -312,18 +329,37 @@ export default function EditProfileModal({ visible, onClose, onProfileUpdated }:
     }
   };
 
-  // Manual refresh function
+  // Manual refresh function - Sincroniza completamente desde el servidor
   const handleManualRefresh = async () => {
     if (refreshing || loading) return; // Prevent multiple refreshes
 
     setRefreshing(true);
-    const freshData = await fetchFreshUserData(true);
+    console.log('🔄 EditProfileModal: Iniciando refresh manual completo...');
 
-    if (freshData) {
-      initializeFormData(freshData);
-      Alert.alert('Éxito', 'Datos actualizados correctamente');
+    // ✅ NUEVO: Usar syncUserData para sincronización completa desde servidor
+    const syncSuccess = await syncUserData(true);
+
+    if (syncSuccess) {
+      console.log('✅ EditProfileModal: Datos sincronizados desde servidor');
+      // ✅ ARREGLADO: Obtener datos frescos y actualizar tanto freshUserData como formData
+      const freshData = await fetchFreshUserData(true);
+      if (freshData) {
+        setFreshUserData(freshData); // ← Esto es clave para actualizar el estado
+        initializeFormData(freshData);
+        console.log('✅ EditProfileModal: Formulario actualizado con datos frescos');
+      }
+      Alert.alert('Éxito', 'Datos actualizados desde el servidor');
     } else {
-      Alert.alert('Error', 'No se pudieron actualizar los datos');
+      console.warn('⚠️ EditProfileModal: Error en sincronización, usando fallback');
+      // Fallback: usar método anterior
+      const freshData = await fetchFreshUserData(true);
+      if (freshData) {
+        setFreshUserData(freshData); // ← También aquí
+        initializeFormData(freshData);
+        Alert.alert('Éxito', 'Datos actualizados correctamente');
+      } else {
+        Alert.alert('Error', 'No se pudieron actualizar los datos');
+      }
     }
 
     setRefreshing(false);
@@ -504,25 +540,40 @@ export default function EditProfileModal({ visible, onClose, onProfileUpdated }:
             <View style={styles.tabContent}>
               <ImageUploadComponent
                 currentImageUrl={freshUserData?.picture || user?.picture}
-                onImageUploaded={async () => {
-                  // Sincronizar datos del usuario después de subir imagen
+                onImageUploaded={async (newImageUrl?: string) => {
+                  // ✅ OPTIMIZADO: Usar función específica para actualizar imagen
                   setRefreshing(true);
+                  console.log('🔄 EditProfileModal: Procesando imagen subida...');
 
-                  const syncSuccess = await syncUserData(true);
+                  if (newImageUrl) {
+                    console.log('✅ EditProfileModal: Actualizando con nueva URL de imagen:', newImageUrl);
 
-                  if (syncSuccess) {
-                    console.log('✅ EditProfileModal: Imagen actualizada y datos sincronizados');
-                    // Actualizar datos frescos para el formulario
-                    const freshData = await fetchFreshUserData(true);
-                    if (freshData) {
-                      initializeFormData(freshData);
+                    // ✅ NUEVO: Usar función específica para actualizar imagen
+                    const pictureUpdateSuccess = await updateUserPicture(newImageUrl);
+
+                    if (pictureUpdateSuccess) {
+                      console.log('✅ EditProfileModal: Imagen actualizada correctamente en AsyncStorage');
+                      // Actualizar el formulario con los datos locales actualizados
+                      const currentUserData = await AsyncStorage.getItem('pubflow_user_data');
+                      if (currentUserData) {
+                        const userData = JSON.parse(currentUserData);
+                        setFreshUserData(userData);
+                        initializeFormData(userData);
+                        console.log('✅ EditProfileModal: Formulario actualizado con nueva imagen');
+                      }
+                    } else {
+                      console.warn('⚠️ EditProfileModal: Error actualizando imagen localmente');
                     }
                   } else {
-                    console.warn('⚠️ EditProfileModal: Error sincronizando después de subir imagen');
-                    // Fallback: usar el método anterior
-                    const freshData = await fetchFreshUserData(true);
-                    if (freshData) {
-                      initializeFormData(freshData);
+                    console.warn('⚠️ EditProfileModal: No se recibió nueva URL, sincronizando desde servidor');
+                    // Fallback: sincronizar desde servidor si no hay URL
+                    const syncSuccess = await syncUserData(true);
+                    if (syncSuccess) {
+                      const freshData = await fetchFreshUserData(true);
+                      if (freshData) {
+                        setFreshUserData(freshData);
+                        initializeFormData(freshData);
+                      }
                     }
                   }
 
