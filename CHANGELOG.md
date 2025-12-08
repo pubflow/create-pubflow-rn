@@ -5,7 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.0] 
+## [1.2.0] - 2025-12-08
+
+### 🆕 Added
+- **Bridge Payments Support**: Integrated `@pubflow/core` v0.4.0 with complete Bridge Payments client
+  - Payment processing with Stripe, PayPal, Authorize.net
+  - Payment intents, methods, and subscriptions management
+  - Organization and multi-tenant support
+  - Guest checkout with token authentication
+- **Updated Dependencies**:
+  - `@pubflow/core`: ^0.2.0 → ^0.4.0
+  - `@pubflow/react-native`: ^0.1.8 → ^0.4.1
+
+### 📚 Documentation
+- Added links to official documentation:
+  - Flowless: https://flowless.dev/
+  - Flowfull Clients: https://clients.flowfull.dev/
+  - Bridge Payments: https://bridgepayments.dev/
+- Updated README with new features and version information
+
+### 🔄 Changed
+- Starter kit version bumped to 1.2.0 to reflect major dependency updates
+
+## [1.1.0]
 
 ### Added
 - **User Data Synchronization System**: Complete solution for keeping local AsyncStorage data in sync with server data after profile updates

@@ -1,6 +1,23 @@
-# Welcome to your Expo app 👋
+# Welcome to your Pubflow React Native App 👋
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+This is a **Pubflow React Native Starter Kit** built with [Expo](https://expo.dev) and the Pubflow framework.
+
+## 📚 Documentation
+
+- **Flowless (Authentication Backend)**: [https://flowless.dev/](https://flowless.dev/)
+- **Flowfull Client Libraries**: [https://clients.flowfull.dev/](https://clients.flowfull.dev/)
+- **Bridge Payments**: [https://bridgepayments.dev/](https://bridgepayments.dev/)
+
+## ✨ Features
+
+- ✅ **@pubflow/core** v0.4.0 - Core functionality with Bridge Payments support
+- ✅ **@pubflow/react-native** v0.4.1 - React Native adapter
+- ✅ **Authentication** - Complete auth flow with Flowless
+- ✅ **Bridge API** - CRUD operations with BridgeTable, BridgeForm, BridgeList
+- ✅ **Bridge Payments** - Payment processing with Stripe, PayPal, etc.
+- ✅ **Offline Support** - Mutation queuing and persistent cache
+- ✅ **TypeScript** - Full type safety
+- ✅ **Expo Router** - File-based routing
 
 ## Get started
 
