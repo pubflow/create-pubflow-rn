@@ -1,13 +1,12 @@
 {
   "expo": {
-    "name": "aula-pml",
-    "slug": "aula-pml",
+    "name": "create-pubflow-rn",
+    "slug": "pubflow-rn",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "aulapml",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
@@ -15,8 +14,7 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      },
-      "edgeToEdgeEnabled": true
+      }
     },
     "web": {
       "bundler": "metro",
@@ -35,7 +33,10 @@
         }
       ],
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      "@react-native-community/datetimepicker",
+      "expo-image",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
