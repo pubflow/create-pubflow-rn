@@ -67,6 +67,13 @@ const eventListeners: Record<string, NetworkEventCallback[]> = {
   error: []
 };
 
+function shouldIgnoreNetworkLog(url: string): boolean {
+  return (
+    url.includes('clients3.google.com/generate_204') ||
+    /https?:\/\/[^/]+:8081\/symbolicate/.test(url)
+  );
+}
+
 /**
  * Genera un ID único para una petición
  */
@@ -280,11 +287,16 @@ export function interceptFetch(): void {
   if (typeof window !== 'undefined' && window.fetch) {
     const originalFetch = window.fetch;
     
-    window.fetch = async function(input: RequestInfo | string, init?: RequestInit) {
-      const url = typeof input === 'string' ? input : input.url;
-      const method = init?.method || (typeof input === 'string' ? 'GET' : input.method) || 'GET';
-      const headers = init?.headers || (typeof input === 'string' ? {} : input.headers) || {};
+    window.fetch = async function(input: globalThis.RequestInfo | URL, init?: RequestInit) {
+      const isRequest = typeof input !== 'string' && !(input instanceof URL);
+      const url = isRequest ? input.url : input.toString();
+      const method = init?.method || (isRequest ? input.method : 'GET') || 'GET';
+      const headers = init?.headers || (isRequest ? input.headers : {}) || {};
       const body = init?.body;
+
+      if (shouldIgnoreNetworkLog(url)) {
+        return originalFetch(input, init);
+      }
       
       // Determinar la fuente de la petición
       let source: RequestInfo['source'] = 'other';
@@ -344,12 +356,13 @@ export function interceptFetch(): void {
         
         return response;
       } catch (error) {
+        const fetchError = error instanceof Error ? error : new Error(String(error));
         // Registrar error
         logError(
           requestId,
-          error.message,
-          error.code,
-          error.stack
+          fetchError.message,
+          'code' in fetchError ? String(fetchError.code) : undefined,
+          fetchError.stack
         );
         
         throw error;

@@ -9,11 +9,13 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import EditProfileModal from '@/components/profile/EditProfileModal';
 import { ColorSystem, MAIN_COLOR } from '@/utils/colorSystem';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ProfileScreen() {
   // Get user data and authentication functions
   const { user, logout, isLoading } = useAuth();
   const colorScheme = useColorScheme();
+  const insets = useSafeAreaInsets();
   const mainColor = MAIN_COLOR;
 
   // Local states
@@ -78,7 +80,7 @@ export default function ProfileScreen() {
   // No user found
   if (!user) {
     return (
-      <ScrollView style={styles.container}>
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingTop: insets.top }}>
         <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
 
         <ThemedView style={styles.header}>
@@ -102,7 +104,7 @@ export default function ProfileScreen() {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingTop: insets.top, paddingBottom: insets.bottom + 92 }}>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
 
       <ThemedView style={styles.header}>
@@ -218,7 +220,6 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     padding: 20,
-    paddingTop: 40,
   },
   profileImageContainer: {
     marginBottom: 16,

@@ -9,8 +9,8 @@ export const userSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   last_name: z.string().min(2, 'Last name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
-  user_type: z.enum(['admin', 'user'], {
-    errorMap: () => ({ message: 'User type must be admin or user' })
+  user_type: z.enum(['admin', 'superadmin', 'customer', 'user'], {
+    errorMap: () => ({ message: 'User type must be admin, superadmin, customer, or user' })
   }),
   picture: z.string().optional(),
   user_name: z.string().min(3, 'Username must be at least 3 characters'),
