@@ -1,6 +1,7 @@
 import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
 import { useAuth as usePubflowAuth } from '@pubflow/react-native';
-import { useRouter } from 'expo-router';
+import type { TwoFactorMethod, TwoFactorStartResult, TwoFactorVerifyResult } from '@pubflow/core';
+import { usePathname, useRouter } from 'expo-router';
 
 // Define the auth context type
 interface AuthContextType {
@@ -10,6 +11,10 @@ interface AuthContextType {
   login: (credentials: { email: string; password: string }) => Promise<any>;
   logout: () => Promise<void>;
   validateSession: () => Promise<{ isValid: boolean; expiresAt?: string }>;
+  twoFactorPending: boolean;
+  twoFactorMethods: TwoFactorMethod[];
+  startTwoFactor: (methodId: string, method: string) => Promise<TwoFactorStartResult>;
+  verifyTwoFactor: (methodId: string, code: string) => Promise<TwoFactorVerifyResult>;
 }
 
 // Create the context
@@ -17,6 +22,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Create a provider component
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const pubflowAuth = usePubflowAuth() as any;
   const {
     isAuthenticated,
     isLoading,
@@ -24,10 +30,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login: pubflowLogin,
     logout: pubflowLogout,
     validateSession,
-  } = usePubflowAuth();
+    twoFactorPending,
+    twoFactorMethods,
+    startTwoFactor,
+    verifyTwoFactor,
+  } = pubflowAuth;
   
   const [initialCheckDone, setInitialCheckDone] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
 
   // Check authentication status on mount
   useEffect(() => {
@@ -37,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setInitialCheckDone(true);
         
         // If not authenticated, redirect to login
-        if (!isValid && router.pathname !== '/login') {
+        if (!isValid && pathname !== '/login') {
           router.replace('/login');
         }
       } catch (error) {
@@ -47,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     checkAuth();
-  }, []);
+  }, [pathname, router, validateSession]);
 
   // Login function wrapper
   const login = async (credentials: { email: string; password: string }) => {
@@ -83,6 +94,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     logout,
     validateSession,
+    twoFactorPending,
+    twoFactorMethods,
+    startTwoFactor,
+    verifyTwoFactor,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
